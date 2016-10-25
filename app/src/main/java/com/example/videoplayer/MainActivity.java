@@ -8,20 +8,39 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
 
     public static final String TAG = "VideoPlayer";
 
     private AsyncTask mVideoUpdateTask;
 
+    private List<VideoItem> mVideoList;
+
+    private ListView mVideoListView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+//        this.setTitle();
+
+        mVideoList = new ArrayList<VideoItem>();
+
+        mVideoListView = (ListView) findViewById(R.id.video_list);
+
+        VideoItemAdapter adapter = new VideoItemAdapter(this, R.layout.video_item, mVideoList);
+
+        mVideoListView.setAdapter(adapter);
+
+        mVideoListView.setOnItemClickListener(this);
 
         mVideoUpdateTask = new VideoUpdateTask();
 
@@ -39,6 +58,11 @@ public class MainActivity extends AppCompatActivity {
 
         mVideoUpdateTask = null;
 
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        VideoItem item = mVideoList.get(position);
     }
 
     /**
@@ -102,7 +126,15 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onProgressUpdate(VideoItem... values) {
+
             VideoItem data = values[0];
+
+            mVideoList.add(data);
+
+            VideoItemAdapter adapter = (VideoItemAdapter) mVideoListView.getAdapter();
+
+            adapter.notifyDataSetChanged();
+
         }
 
         @Override

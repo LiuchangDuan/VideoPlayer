@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">播放器</string>
-    <string name="search_path">/0/Video</string>
+    <string name="search_path">/Video</string>
 </resources>
