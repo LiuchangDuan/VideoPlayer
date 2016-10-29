@@ -38,8 +38,34 @@ public class VideoItem {
          * FULL_SCREEN_KIND 表示大尺寸的缩略图
          * MICRO_KIND 表示超小图的缩略图
          */
-        this.thumb = ThumbnailUtils.createVideoThumbnail(path, MediaStore.Images.Thumbnails.MINI_KIND);
+//        this.thumb = ThumbnailUtils.createVideoThumbnail(path, MediaStore.Images.Thumbnails.MINI_KIND);
 
     }
 
+    // 将创建缩略图的功能独立出来
+    void createThumb() {
+        if (this.thumb == null) {
+            this.thumb = ThumbnailUtils.createVideoThumbnail(this.path, MediaStore.Images.Thumbnails.MINI_KIND);
+        }
+    }
+
+    // 释放
+    void releaseThumb() {
+        if (this.thumb != null) {
+            this.thumb.recycle();
+            this.thumb = null;
+        }
+    }
+
+    /**
+     * 只要文件所在的路径是相同的
+     * 就认为这两个比较项指的是同一个
+     * @param o
+     * @return
+     */
+    @Override
+    public boolean equals(Object o) {
+        VideoItem another = (VideoItem) o;
+        return another.path.equals(this.path);
+    }
 }

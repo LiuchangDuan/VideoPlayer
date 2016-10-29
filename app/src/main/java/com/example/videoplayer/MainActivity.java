@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -24,6 +26,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private List<VideoItem> mVideoList;
 
     private ListView mVideoListView;
+
+    private MenuItem mRefreshMenuItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +67,62 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         VideoItem item = mVideoList.get(position);
+    }
+
+    /**
+     *
+     * 此方法用于初始化菜单，其中menu参数就是即将要显示的Menu实例
+     *
+     * @param menu
+     * @return 返回true则显示该menu,false 则不显示
+     *
+     * 只会在第一次初始化菜单时调用
+     *
+     */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        getMenuInflater().inflate(R.menu.menu, menu);
+
+        // 获取“刷新”菜单项
+        mRefreshMenuItem = menu.findItem(R.id.menu_refresh);
+
+        // 当VideoUpdateTask处于运行的状态时，菜单项的标题显示为“停止刷新”
+        if (mVideoUpdateTask != null && mVideoUpdateTask.getStatus() == AsyncTask.Status.RUNNING) {
+            mRefreshMenuItem.setTitle(R.string.in_refresh);
+        } else {
+            // 当VideoUpdateTask没有处于运行的状态时，菜单项的标题显示为“刷新”
+            mRefreshMenuItem.setTitle(R.string.refresh);
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch(item.getItemId()) {
+            case R.id.menu_refresh:
+                if (mVideoUpdateTask != null && mVideoUpdateTask.getStatus() == AsyncTask.Status.RUNNING) {
+                    // 当VideoUpdateTask处于运行的状态时，取消VideoUpdateTask的工作
+                    mVideoUpdateTask.cancel(true);
+                    mVideoUpdateTask = null;
+                } else {
+                    // 当VideoUpdateTask没有处于运行的状态时，启动VideoUpdateTask的工作
+                    mVideoUpdateTask = new VideoUpdateTask();
+                    mVideoUpdateTask.execute();
+                    // 修改菜单项的标题为“停止刷新”
+                    if (mRefreshMenuItem != null) {
+                        mRefreshMenuItem.setTitle(R.string.in_refresh);
+                    }
+                }
+                break;
+
+            default:
+                return super.onContextItemSelected(item);
+        }
+
+        return true;
     }
 
     /**
@@ -116,7 +176,17 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
                     Log.d(TAG, "real video found: " + path);
 
-                    publishProgress(videoItem);
+//                    publishProgress(videoItem);
+
+                    // 判断出之前没有这个视频，才发送给主线程更新界面
+                    if (mVideoList.contains(videoItem) == false) {
+                        // 判断需要添加，才创建缩略图
+                        videoItem.createThumb();
+                        publishProgress(videoItem);
+                    }
+
+                    // 保存起来
+                    mDataList.add(videoItem);
 
                 }
                 cursor.close();
@@ -137,14 +207,51 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         }
 
+        /**
+         * 工作完成后会被调用
+         * 在主线程中运行
+         * 可以在此修改界面
+         * @param aVoid
+         */
         @Override
         protected void onPostExecute(Void aVoid) {
             Log.d(TAG, "Task has been finished");
+            updateResult();
         }
 
+        /**
+         * 成功取消工作时会被调用
+         * 在主线程中运行
+         * 可以在此修改界面
+         */
         @Override
         protected void onCancelled() {
             Log.d(TAG, "Task has been cancelled");
+            updateResult();
+        }
+
+        private void updateResult() {
+            for (int i = 0; i < mVideoList.size(); i++) {
+                if (!mDataList.contains(mVideoList.get(i))) {
+                    // 释放缩略图占用的内存资源
+                    mVideoList.get(i).releaseThumb();
+                    // 从ListView的数据集中移除多余的视频信息
+                    mVideoList.remove(i);
+                    // 因为移除了一个视频项，下一个视频项的序号就被减小了一个1
+                    i--;
+                }
+            }
+            mDataList.clear();
+
+            // 通知ListView数据有改变，需要刷新
+            VideoItemAdapter adapter = (VideoItemAdapter) mVideoListView.getAdapter();
+            adapter.notifyDataSetChanged();
+
+            // 修改菜单项的标题为“刷新”
+            if (mRefreshMenuItem != null) {
+                mRefreshMenuItem.setTitle(R.string.refresh);
+            }
+
         }
 
     }
