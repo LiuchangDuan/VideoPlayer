@@ -1,6 +1,7 @@
 package com.example.videoplayer;
 
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -67,6 +68,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         VideoItem item = mVideoList.get(position);
+        Intent intent = new Intent(this, VideoPlayer.class);
+        intent.setData(Uri.parse(item.path));
+        startActivity(intent);
     }
 
     /**
