@@ -1,11 +1,13 @@
 package com.example.videoplayer;
 
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+import android.view.WindowManager;
 import android.widget.MediaController;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,6 +22,8 @@ public class VideoPlayer extends AppCompatActivity {
 
     // 用于记录当前播放的位置
     private int mLastPlayedTime;
+
+    private final String LAST_PLAYED_TIME = "LAST_TIME";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,61 +40,71 @@ public class VideoPlayer extends AppCompatActivity {
 
         setContentView(R.layout.activity_video_player);
 
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        // 如果为竖屏
+        if (this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
 
-        String[] searchKey = new String[] {
-            MediaStore.Video.Media.TITLE, // 视频标题
-            MediaStore.Video.Media.WIDTH,
-            MediaStore.Video.Media.HEIGHT, // 视频文件大小
-            MediaStore.Video.Media.SIZE, // 视频尺寸
-            MediaStore.Video.Media.DATE_ADDED // 视频创建时间
-        };
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        String where = MediaStore.Video.Media.DATA + " = '" + path + "'";
+            String[] searchKey = new String[] {
+                MediaStore.Video.Media.TITLE, // 视频标题
+                MediaStore.Video.Media.WIDTH,
+                MediaStore.Video.Media.HEIGHT, // 视频文件大小
+                MediaStore.Video.Media.SIZE, // 视频尺寸
+                MediaStore.Video.Media.DATE_ADDED // 视频创建时间
+            };
 
-        String[] keywords = null;
+            String where = MediaStore.Video.Media.DATA + " = '" + path + "'";
 
-        String sortOrder = MediaStore.Video.Media.DEFAULT_SORT_ORDER;
+            String[] keywords = null;
 
-        Cursor cursor = getContentResolver().query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, searchKey, where, keywords, sortOrder);
+            String sortOrder = MediaStore.Video.Media.DEFAULT_SORT_ORDER;
 
-        if (cursor != null) {
-            if (cursor.getCount() > 0) {
-                cursor.moveToNext();
+            Cursor cursor = getContentResolver().query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, searchKey, where, keywords, sortOrder);
 
-                String createdTime = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED));
-                String name = cursor.getString(cursor.getColumnIndex(MediaStore.Video.Media.TITLE));
-                int size = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.SIZE)); // The size of the file in bytes
-                int width = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.WIDTH));
-                int height = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.HEIGHT));
-                VideoItem item = new VideoItem(path, name, createdTime);
+            if (cursor != null) {
+                if (cursor.getCount() > 0) {
+                    cursor.moveToNext();
 
-                TextView title = (TextView) findViewById(R.id.video_title);
-                title.setText(item.name);
+                    String createdTime = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED));
+                    String name = cursor.getString(cursor.getColumnIndex(MediaStore.Video.Media.TITLE));
+                    int size = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.SIZE)); // The size of the file in bytes
+                    int width = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.WIDTH));
+                    int height = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.HEIGHT));
+                    VideoItem item = new VideoItem(path, name, createdTime);
 
-                TextView created = (TextView) findViewById(R.id.video_create_time);
-                created.setText(item.createdTime);
+                    TextView title = (TextView) findViewById(R.id.video_title);
+                    title.setText(item.name);
 
-                TextView screen = (TextView) findViewById(R.id.video_width_height);
-                screen.setText(width + "*" + height);
+                    TextView created = (TextView) findViewById(R.id.video_create_time);
+                    created.setText(item.createdTime);
 
-                TextView fileSize = (TextView) findViewById(R.id.video_size);
-                fileSize.setText(String.valueOf(size / 1024 / 1024) + "M");
+                    TextView screen = (TextView) findViewById(R.id.video_width_height);
+                    screen.setText(width + "*" + height);
 
-            } else {
-                TextView title = (TextView) findViewById(R.id.video_title);
-                title.setText(R.string.unknown);
+                    TextView fileSize = (TextView) findViewById(R.id.video_size);
+                    fileSize.setText(String.valueOf(size / 1024 / 1024) + "M");
 
-                TextView created = (TextView) findViewById(R.id.video_create_time);
-                created.setText(R.string.unknown);
+                } else {
+                    TextView title = (TextView) findViewById(R.id.video_title);
+                    title.setText(R.string.unknown);
 
-                TextView screen = (TextView) findViewById(R.id.video_width_height);
-                screen.setText(R.string.unknown);
+                    TextView created = (TextView) findViewById(R.id.video_create_time);
+                    created.setText(R.string.unknown);
 
-                TextView fileSize = (TextView) findViewById(R.id.video_size);
-                fileSize.setText(R.string.unknown);
+                    TextView screen = (TextView) findViewById(R.id.video_width_height);
+                    screen.setText(R.string.unknown);
+
+                    TextView fileSize = (TextView) findViewById(R.id.video_size);
+                    fileSize.setText(R.string.unknown);
+                }
+                cursor.close();
             }
-            cursor.close();
+        } else {
+            // 全屏设置
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            // 隐藏状态栏和导航栏
+            // 隐藏ActionBar
+            getSupportActionBar().hide();
         }
 
         mVideoView = (VideoView) findViewById(R.id.video_view);
@@ -109,6 +123,21 @@ public class VideoPlayer extends AppCompatActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        // 保存当前播放的位置
+        outState.putInt(LAST_PLAYED_TIME, mVideoView.getCurrentPosition());
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        mLastPlayedTime = savedInstanceState.getInt(LAST_PLAYED_TIME);
     }
 
     @Override
