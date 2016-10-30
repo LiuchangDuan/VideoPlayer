@@ -1,12 +1,15 @@
 <resources>
-    <string name="app_name">播放器</string>
+    <string name="app_name">VideoPlayer</string>
+    <string name="video_list">Video List</string>
     <string name="search_path">/Video</string>
-    <string name="in_refresh">停止刷新</string>
-    <string name="refresh">刷新</string>
-    <string name="unknown">未知</string>
-    <string name="no_playing_target">没有可播放的视频</string>
-    <string name="video_name">视频名称：</string>
-    <string name="video_width_height">视频尺寸：</string>
-    <string name="video_size">文件大小：</string>
-    <string name="created_time">创建时间：</string>
+    <string name="in_refresh">Stop freshing</string>
+    <string name="refresh">Refresh</string>
+    <string name="unknown">Unknown</string>
+    <string name="no_playing_target">No video found!</string>
+    <string name="video_name">Video Name:</string>
+    <string name="video_width_height">Video size:</string>
+    <string name="video_size">Video file size:</string>
+    <string name="created_time">Create Time:</string>
+    <string name="about">About</string>
+    <string name="version_info">Version: %s \n Designer: </string>
 </resources>

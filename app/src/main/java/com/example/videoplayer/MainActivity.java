@@ -47,10 +47,16 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         mVideoListView.setOnItemClickListener(this);
 
+        updateVideoList();
+
+    }
+
+    private void updateVideoList() {
         mVideoUpdateTask = new VideoUpdateTask();
-
         mVideoUpdateTask.execute();
-
+        if (mRefreshMenuItem != null) {
+            mRefreshMenuItem.setTitle(R.string.in_refresh);
+        }
     }
 
     @Override
@@ -112,15 +118,21 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     mVideoUpdateTask.cancel(true);
                     mVideoUpdateTask = null;
                 } else {
-                    // 当VideoUpdateTask没有处于运行的状态时，启动VideoUpdateTask的工作
-                    mVideoUpdateTask = new VideoUpdateTask();
-                    mVideoUpdateTask.execute();
-                    // 修改菜单项的标题为“停止刷新”
-                    if (mRefreshMenuItem != null) {
-                        mRefreshMenuItem.setTitle(R.string.in_refresh);
-                    }
+//                    // 当VideoUpdateTask没有处于运行的状态时，启动VideoUpdateTask的工作
+//                    mVideoUpdateTask = new VideoUpdateTask();
+//                    mVideoUpdateTask.execute();
+//                    // 修改菜单项的标题为“停止刷新”
+//                    if (mRefreshMenuItem != null) {
+//                        mRefreshMenuItem.setTitle(R.string.in_refresh);
+//                    }
+
+                    updateVideoList();
                 }
                 break;
+
+            case R.id.menu_about:
+                Intent i = new Intent(this, AboutActivity.class);
+                startActivity(i);
 
             default:
                 return super.onContextItemSelected(item);
